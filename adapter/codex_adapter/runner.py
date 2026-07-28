@@ -43,11 +43,18 @@ def validate_request(payload: Any, config: AdapterConfig) -> RunRequest:
         raise RequestError("prompt must be a non-empty string")
 
     repo_value = payload.get("repo_path")
-    if not isinstance(repo_value, str) or not repo_value.strip():
-        raise RequestError("repo_path must be a non-empty string")
-    repo_path = Path(repo_value).expanduser().resolve()
-    if repo_path not in config.allowed_repos:
-        raise RequestError("repo_path is not in the adapter allowlist")
+    if repo_value is None:
+        if len(config.allowed_repos) != 1:
+            raise RequestError(
+                "repo_path is required when more than one repository is allowlisted"
+            )
+        repo_path = config.allowed_repos[0]
+    else:
+        if not isinstance(repo_value, str) or not repo_value.strip():
+            raise RequestError("repo_path must be a non-empty string")
+        repo_path = Path(repo_value).expanduser().resolve()
+        if repo_path not in config.allowed_repos:
+            raise RequestError("repo_path is not in the adapter allowlist")
 
     mode = payload.get("mode", "read_only")
     if mode not in MODE_TO_SANDBOX:

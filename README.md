@@ -67,6 +67,33 @@ make adapter
 Так проект не создаёт launch agents, глобальные конфиги или фоновые файлы вне
 своей папки.
 
+### Local Codex Chat
+
+Workflow `workflows/local-codex-chat.workflow.json` предоставляет локальный
+hosted chat:
+
+```text
+Chat Trigger -> Build Codex Prompt -> Run Local Codex -> Return Chat Response
+```
+
+Перед использованием запустите adapter в отдельном terminal/Codex task:
+
+```bash
+make adapter
+```
+
+После публикации workflow production-чат доступен только локально и требует
+входа в n8n:
+
+```text
+http://127.0.0.1:5678/webhook/ddc1867c-6528-4d03-a179-538748b77074/chat
+```
+
+Чат требует авторизованного пользователя n8n, adapter слушает только
+`127.0.0.1`, а Codex ограничен allowlisted repository и режимами
+`read_only`/`workspace_write`. Каждый chat message пока запускает отдельную
+ephemeral Codex-сессию без памяти предыдущих сообщений.
+
 Workflow definitions:
 
 ```bash

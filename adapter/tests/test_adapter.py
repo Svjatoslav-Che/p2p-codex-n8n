@@ -68,6 +68,28 @@ class AdapterTestCase(unittest.TestCase):
         self.assertEqual(request.timeout_seconds, 30)
         self.assertEqual(request.request_id, "n8n-1")
 
+    def test_validate_request_defaults_to_only_allowlisted_repo(self) -> None:
+        request = validate_request(
+            {
+                "prompt": "Inspect the repository",
+                "mode": "read_only",
+            },
+            self.config,
+        )
+        self.assertEqual(request.repo_path, self.repo.resolve())
+
+    def test_validate_request_requires_repo_for_multiple_allowlisted_repos(self) -> None:
+        second_repo = Path(self.temp_dir.name) / "second-repo"
+        second_repo.mkdir()
+        config = AdapterConfig(
+            **{
+                **self.config.__dict__,
+                "allowed_repos": (self.repo.resolve(), second_repo.resolve()),
+            }
+        )
+        with self.assertRaisesRegex(RequestError, "more than one"):
+            validate_request({"prompt": "test"}, config)
+
     def test_validate_request_rejects_repo_outside_allowlist(self) -> None:
         outside = Path(self.temp_dir.name) / "outside"
         outside.mkdir()

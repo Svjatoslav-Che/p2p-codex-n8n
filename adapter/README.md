@@ -24,7 +24,9 @@ when automatic discovery is insufficient.
 ## Configure
 
 Review `config.json` before starting. Every accepted `repo_path` must exactly
-match one of the real paths in `allowed_repos`.
+match one of the real paths in `allowed_repos`. When exactly one repository is
+allowlisted, callers may omit `repo_path`; the adapter selects that repository
+automatically. This keeps version-controlled n8n workflows portable.
 
 For local authentication, create a random token and put it in the process
 environment instead of committing it:

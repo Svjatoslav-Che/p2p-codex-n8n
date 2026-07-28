@@ -1,0 +1,142 @@
+[
+  {
+    "id": "f9bdcfe0-09ab-4dbc-88f8-213e655589d4",
+    "name": "Local Codex Chat",
+    "nodes": [
+      {
+        "parameters": {
+          "public": true,
+          "mode": "hostedChat",
+          "authentication": "n8nUserAuth",
+          "initialMessages": "Привет! Я локальный Codex для проекта Automation Workbench.\nОпишите задачу, которую нужно выполнить в проекте.",
+          "options": {
+            "allowedOrigins": "http://127.0.0.1:5678,http://localhost:5678",
+            "inputPlaceholder": "Например: проверь сайты и создай отчёт",
+            "loadPreviousSession": "notSupported",
+            "responseMode": "lastNode",
+            "showWelcomeScreen": false,
+            "subtitle": "Локальный coding-агент с доступом только к allowlisted проекту",
+            "title": "Local Codex Chat"
+          }
+        },
+        "id": "fb88da6a-f21d-4cc1-8625-721a226cab51",
+        "name": "When Chat Message Received",
+        "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          0,
+          0
+        ],
+        "webhookId": "ddc1867c-6528-4d03-a179-538748b77074"
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst userMessage = String(input.chatInput ?? '').trim();\n\nif (!userMessage) {\n  throw new Error('chatInput is empty');\n}\n\nconst systemPrompt = [\n  'Ты локальный Codex-агент проекта Automation Workbench.',\n  'Работай только внутри текущего allowlisted repository.',\n  'Перед действиями прочитай AGENTS.md и релевантный файл сценария.',\n  'Не записывай секреты, cookies, credentials или runtime в Git.',\n  'Не изменяй файлы, если пользователь просит только объяснить, проверить или диагностировать.',\n  'Если пользователь просит изменение, выполни его, проверь результат и кратко сообщи созданные файлы.',\n  'Для website availability используй scenarios/website-availability/SCENARIO.md.',\n].join('\\n');\n\nreturn [{\n  json: {\n    ...input,\n    prompt: `${systemPrompt}\\n\\nСообщение пользователя:\\n${userMessage}`,\n  },\n}];"
+        },
+        "id": "fa0ea84f-f152-4b30-a613-a55c4299000c",
+        "name": "Build Codex Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          260,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://host.docker.internal:8765/codex/run",
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ prompt: $json.prompt, mode: 'workspace_write', timeout_seconds: 300, request_id: 'chat-' + String($execution.id) }) }}",
+          "options": {
+            "timeout": 300000
+          }
+        },
+        "id": "6a866477-a5b8-49bd-8d70-ab19113cbffc",
+        "name": "Run Local Codex",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          520,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const result = $input.first().json;\nconst finalOutput = String(result.final_output ?? '').trim();\nconst fallback = result.error\n  ? `Codex adapter error: ${result.error}`\n  : 'Codex завершил запрос без текстового ответа.';\n\nreturn [{\n  json: {\n    output: finalOutput || fallback,\n  },\n}];"
+        },
+        "id": "3a0a15c7-777a-4833-9be0-f2db684bf56c",
+        "name": "Return Chat Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          780,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "content": "## Local Codex Chat\n\n**Prompt source:** `Build Codex Prompt`\n\n**Project rules:** `AGENTS.md`\n\n**Adapter:** `make adapter`\n\nFlow:\n\n1. Chat Trigger receives `chatInput`.\n2. Prompt node adds project instructions.\n3. HTTP Request calls local Codex.\n4. Last node returns `{ output: \"...\" }` to chat.\n\nEach message is an independent Codex run; conversation memory is not enabled.",
+          "height": 320,
+          "width": 360,
+          "color": 5
+        },
+        "id": "c921da41-997c-4bad-96af-41f522645cff",
+        "name": "Chat Instructions",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          200,
+          -440
+        ]
+      }
+    ],
+    "pinData": {},
+    "connections": {
+      "When Chat Message Received": {
+        "main": [
+          [
+            {
+              "node": "Build Codex Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Codex Prompt": {
+        "main": [
+          [
+            {
+              "node": "Run Local Codex",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Run Local Codex": {
+        "main": [
+          [
+            {
+              "node": "Return Chat Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "active": false,
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "versionId": "694fb8da-b4fd-490f-819f-56de6dac62dc",
+    "meta": {
+      "templateCredsSetupCompleted": true
+    },
+    "tags": []
+  }
+]
