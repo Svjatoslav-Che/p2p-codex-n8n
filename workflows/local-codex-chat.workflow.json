@@ -91,6 +91,80 @@
           200,
           -440
         ]
+      },
+      {
+        "parameters": {},
+        "id": "2a14b668-5f04-4108-998d-172011411eba",
+        "name": "Run Website Scenario Button",
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          0,
+          520
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const instructionFile = 'scenarios/website-availability/RUN_PROMPT.md';\nconst scenarioFile = 'scenarios/website-availability/SCENARIO.md';\nconst inputFile = 'scenarios/website-availability/sites.json';\nconst action = [\n  'Проверить все environments из input_file.',\n  'Для каждого environment сохранить HTTP-результат и screenshot.',\n  'Создать report.md и report.json в новой папке runs/<run-id>/.',\n  'Отправить report.json в локальный n8n evidence gate.',\n  'Не переходить к функциональным проверкам без полного PASS.',\n].join(' ');\n\nconst prompt = [\n  'Запусти сценарий по кнопке n8n.',\n  'Сначала прочитай AGENTS.md.',\n  `Прочитай основной prompt: ${instructionFile}`,\n  `Прочитай описание сценария: ${scenarioFile}`,\n  `Используй входные данные: ${inputFile}`,\n  `Задача: ${action}`,\n  'Следуй указанным файлам как источнику истины.',\n  'Если обязательный инструмент недоступен, не подделывай evidence: верни BLOCKED и точную причину.',\n].join('\\n');\n\nreturn [{\n  json: {\n    trigger: 'manual_button',\n    instruction_file: instructionFile,\n    scenario_file: scenarioFile,\n    input_file: inputFile,\n    action,\n    prompt,\n  },\n}];"
+        },
+        "id": "d7707a89-c2d5-41be-bdc6-fc47ed0e5bfb",
+        "name": "Website Scenario Instruction",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          260,
+          520
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://host.docker.internal:8765/codex/run",
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ prompt: $json.prompt, mode: 'workspace_write', timeout_seconds: 900, request_id: 'scenario-' + String($execution.id) }) }}",
+          "options": {
+            "timeout": 900000
+          }
+        },
+        "id": "c2985438-742f-45ad-a790-51a22998123a",
+        "name": "Run Website Scenario",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          520,
+          520
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const result = $input.first().json;\n\nreturn [{\n  json: {\n    ok: Boolean(result.ok),\n    request_id: result.request_id ?? null,\n    duration_ms: result.duration_ms ?? null,\n    result: String(result.final_output ?? result.error ?? '').trim(),\n  },\n}];"
+        },
+        "id": "4f01aef2-628c-4f72-8936-4c715c555203",
+        "name": "Website Scenario Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          780,
+          520
+        ]
+      },
+      {
+        "parameters": {
+          "content": "## One-click website scenario\n\nClick **Execute workflow** to start this branch.\n\n### Files\n\n- Prompt: `scenarios/website-availability/RUN_PROMPT.md`\n- Rules: `scenarios/website-availability/SCENARIO.md`\n- Input: `scenarios/website-availability/sites.json`\n\n### Action\n\nCheck every environment, capture evidence, create `report.md` and `report.json`, submit the result to the evidence gate, and continue only after PASS.\n\nThe `Website Scenario Instruction` node contains the executable prompt and relative file paths.",
+          "height": 360,
+          "width": 420,
+          "color": 4
+        },
+        "id": "9c28ea20-8b14-45dd-a42c-df31d220f311",
+        "name": "Button Scenario Instructions",
+        "type": "n8n-nodes-base.stickyNote",
+        "typeVersion": 1,
+        "position": [
+          180,
+          740
+        ]
       }
     ],
     "pinData": {},
@@ -122,6 +196,39 @@
           [
             {
               "node": "Return Chat Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Run Website Scenario Button": {
+        "main": [
+          [
+            {
+              "node": "Website Scenario Instruction",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Website Scenario Instruction": {
+        "main": [
+          [
+            {
+              "node": "Run Website Scenario",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Run Website Scenario": {
+        "main": [
+          [
+            {
+              "node": "Website Scenario Result",
               "type": "main",
               "index": 0
             }
