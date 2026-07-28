@@ -1,0 +1,132 @@
+[
+  {
+    "id": "df7b49bb-8164-4c33-ab3d-51490da42cbe",
+    "name": "Website Availability Evidence Gate",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "website-availability-gate",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "b1b4ed7a-cb59-4834-8e15-a80a0641e600",
+        "name": "Receive Codex Audit Result",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "webhookId": "98d76233-8716-4575-af1e-730569fc040d"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "a32e6e2a-0369-4e34-93a6-08c51ed66ccd",
+                "leftValue": "={{ $json.body.all_ok }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "59cf6844-9fce-490f-b9a2-f0df9c3a00c5",
+        "name": "All Evidence OK?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          300,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ { ...$json.body, gate: 'passed', proceed_to: 'functional_checks' } }}",
+          "options": {}
+        },
+        "id": "8a1b827e-98f1-4aa6-81a0-8f3e0331bd45",
+        "name": "Proceed to Functional Checks",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          600,
+          -100
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ { ...$json.body, gate: 'failed', proceed_to: null } }}",
+          "options": {
+            "responseCode": 424
+          }
+        },
+        "id": "4e074098-e3c3-4840-be77-d87ca95e7800",
+        "name": "Block Functional Checks",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          600,
+          100
+        ]
+      }
+    ],
+    "pinData": {},
+    "connections": {
+      "Receive Codex Audit Result": {
+        "main": [
+          [
+            {
+              "node": "All Evidence OK?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "All Evidence OK?": {
+        "main": [
+          [
+            {
+              "node": "Proceed to Functional Checks",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Block Functional Checks",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "active": false,
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "versionId": "407cfc6e-4c34-4d71-aacc-16204f18a647",
+    "meta": {
+      "templateCredsSetupCompleted": true
+    },
+    "tags": []
+  }
+]

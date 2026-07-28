@@ -1,0 +1,95 @@
+[
+  {
+    "id": "6f79b219-7e80-41b4-9193-08d06c97820a",
+    "name": "Local Codex Adapter MVP",
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "local-codex-run",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "045c5547-f3c2-4d59-a151-ff291a8705f4",
+        "name": "Local Codex Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          0,
+          0
+        ],
+        "webhookId": "caa18263-0cf5-4ac9-b414-645841d695ce"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://host.docker.internal:8765/codex/run",
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={{ JSON.stringify({ prompt: $json.body.prompt, repo_path: $json.body.repo_path, mode: $json.body.mode || 'read_only', timeout_seconds: $json.body.timeout_seconds || 900, request_id: String($execution.id) }) }}",
+          "options": {
+            "timeout": 3600000
+          }
+        },
+        "id": "3d6bd5b4-7af2-42be-b514-f3f93eec89a5",
+        "name": "Run Codex",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          260,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json }}",
+          "options": {}
+        },
+        "id": "343bde2e-3e86-4aee-bbb4-89701485c772",
+        "name": "Return Codex Result",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.4,
+        "position": [
+          520,
+          0
+        ]
+      }
+    ],
+    "pinData": {},
+    "connections": {
+      "Local Codex Webhook": {
+        "main": [
+          [
+            {
+              "node": "Run Codex",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Run Codex": {
+        "main": [
+          [
+            {
+              "node": "Return Codex Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "active": true,
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "versionId": "94089f90-8755-4678-bb55-bde4d1060cf6",
+    "meta": {
+      "templateCredsSetupCompleted": true
+    },
+    "tags": []
+  }
+]

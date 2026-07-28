@@ -1,0 +1,12 @@
+.DS_Store
+.env
+.runtime/
+
+__pycache__/
+*.py[cod]
+*.log
+
+# Raw run artifacts stay local. Move selected evidence to evidence/ to commit it.
+scenarios/*/runs/*
+!scenarios/*/runs/.gitkeep
+

@@ -1,0 +1,14 @@
+{
+  "check_name": "local-stack-smoke",
+  "sites": [
+    {
+      "name": "Local n8n",
+      "health_url": "http://127.0.0.1:5678/healthz",
+      "browser_url": "http://127.0.0.1:5678/home/workflows",
+      "expected_statuses": [
+        200
+      ]
+    }
+  ]
+}
+

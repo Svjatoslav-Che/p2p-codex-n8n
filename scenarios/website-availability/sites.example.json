@@ -1,0 +1,14 @@
+{
+  "check_name": "replace-me",
+  "sites": [
+    {
+      "name": "Example",
+      "health_url": "https://example.com/",
+      "browser_url": "https://example.com/",
+      "expected_statuses": [
+        200
+      ]
+    }
+  ]
+}
+
